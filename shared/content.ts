@@ -1,4 +1,6 @@
-import type { LabScenario, Lesson, PrivacyQuestion, ProtectionCheck, RadarItem } from './types';
+import type { LabScenario, RadarItem } from './types';
+export { lessons } from './lessons';
+export { privacyQuestions, protectionChecks } from './audits';
 
 // Fictional teaching examples, authored for this project. No live threat telemetry.
 export const radarSeeds: RadarItem[] = [
@@ -44,6 +46,3 @@ export const labScenarios: LabScenario[] = [
   { id: 'lab-passkey', title: 'A passkey you chose to create', channel: 'login', sender: 'Aster Mail settings (fictional)', message: 'You opened account settings yourself. Choose Create passkey, then confirm using your device’s built-in screen lock. Never send your screen-lock code to support.', difficulty: 3, correctVerdict: 'safe', hotspots: [{ id: 'passkey-1', text: 'device’s built-in screen lock', explanation: 'A legitimate passkey flow can use device verification without sending your screen-lock code to another person.', suspicious: false }], explanation: 'This is a safer pattern when you are on the genuine site and started the action yourself. Keep recovery options up to date too.', lessonSlug: 'passkeys-mfa', source: 'seed', fictional: true },
 ];
 
-export const lessons: Lesson[] = [];
-export const privacyQuestions: PrivacyQuestion[] = [];
-export const protectionChecks: ProtectionCheck[] = [];
