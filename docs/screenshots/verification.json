@@ -1,0 +1,30 @@
+{
+  "capturedAt": "2026-10-28T10:02:22.168Z",
+  "mode": "demo",
+  "base": "http://127.0.0.1:8787",
+  "viewport": {
+    "desktop": "1440×1000",
+    "mobile": "390×844"
+  },
+  "captures": [
+    "01-dashboard-desktop.png",
+    "02-analyzer-result.png",
+    "03-scam-radar.png",
+    "04-phishing-lab.png",
+    "05-privacy-plan.png",
+    "06-account-protection.png",
+    "07-learn-hub.png",
+    "08-data-settings.png",
+    "09-dashboard-mobile.png",
+    "10-dashboard-mobile-light.png"
+  ],
+  "checks": [
+    "Analyzer result and micro-lesson",
+    "Lab submission",
+    "Twelve-question privacy plan",
+    "Navigation command palette",
+    "Mobile overflow",
+    "Theme toggle",
+    "No browser console/page errors"
+  ]
+}
