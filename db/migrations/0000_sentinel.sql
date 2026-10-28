@@ -1,0 +1,17 @@
+CREATE TABLE IF NOT EXISTS users (id text PRIMARY KEY, display_name text NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS analyses (id text PRIMARY KEY, user_id text REFERENCES users(id) ON DELETE CASCADE, input_hash text NOT NULL, category text NOT NULL, risk_score integer NOT NULL CHECK (risk_score BETWEEN 0 AND 100), result_json jsonb NOT NULL, encrypted_content text, created_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX IF NOT EXISTS analyses_hash_date_idx ON analyses(input_hash,created_at);
+CREATE INDEX IF NOT EXISTS analyses_user_idx ON analyses(user_id);
+CREATE TABLE IF NOT EXISTS radar_items (id text PRIMARY KEY,date text NOT NULL,title text NOT NULL,type text NOT NULL,severity text NOT NULL,payload_json jsonb NOT NULL,source text NOT NULL CHECK(source IN ('seed','gemini')));
+CREATE INDEX IF NOT EXISTS radar_date_idx ON radar_items(date);
+CREATE TABLE IF NOT EXISTS activities (id text PRIMARY KEY,user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,event_key text NOT NULL,kind text NOT NULL,title text NOT NULL,description text NOT NULL,xp integer NOT NULL DEFAULT 0 CHECK(xp >= 0),payload jsonb NOT NULL DEFAULT '{}',created_at timestamptz NOT NULL DEFAULT now());
+CREATE UNIQUE INDEX IF NOT EXISTS activities_user_key_idx ON activities(user_id,event_key);
+CREATE INDEX IF NOT EXISTS activities_user_date_idx ON activities(user_id,created_at);
+CREATE TABLE IF NOT EXISTS lab_attempts (id text PRIMARY KEY,user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,scenario_id text NOT NULL,score integer NOT NULL CHECK(score BETWEEN 0 AND 100),payload_json jsonb NOT NULL,created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS progress (user_id text PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,xp integer NOT NULL DEFAULT 0,level integer NOT NULL DEFAULT 1,streak integer NOT NULL DEFAULT 0,last_active text);
+CREATE TABLE IF NOT EXISTS badges (user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,key text NOT NULL,created_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY(user_id,key));
+CREATE TABLE IF NOT EXISTS privacy_audits (id text PRIMARY KEY,user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,payload_json jsonb NOT NULL,created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS checklist_state (user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,key text NOT NULL,checked integer NOT NULL DEFAULT 0 CHECK(checked IN (0,1)),PRIMARY KEY(user_id,key));
+CREATE TABLE IF NOT EXISTS audit_log (id text PRIMARY KEY,actor text REFERENCES users(id) ON DELETE CASCADE,action text NOT NULL,ip_hash text NOT NULL,created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS rate_limits (key text PRIMARY KEY,count integer NOT NULL,expires_at timestamptz NOT NULL);
+CREATE INDEX IF NOT EXISTS rate_limits_expiry_idx ON rate_limits(expires_at);
