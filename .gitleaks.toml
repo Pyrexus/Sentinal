@@ -1,0 +1,7 @@
+title = "Sentinel secret scan"
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Examples shipped in the downloaded scanner documentation (not project source)"
+paths = ['''(^|[\\/])\.tools[\\/]gitleaks[\\/]README\.md$''']

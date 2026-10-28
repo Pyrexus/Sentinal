@@ -21,7 +21,7 @@
     "screenshots": "node scripts/screenshots.mjs",
     "db:migrate": "tsx db/migrate.ts",
     "db:seed": "tsx db/seed.ts",
-    "secrets:scan": "gitleaks dir . --redact",
+    "secrets:scan": "node scripts/scan-secrets.mjs",
     "prepare": "node scripts/install-hooks.mjs"
   },
   "dependencies": {
