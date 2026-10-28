@@ -1,0 +1,21 @@
+# Leave credentials blank to use the isolated, temporary demo experience.
+# Google AI Studio API key. This stays inside the Worker.
+GEMINI_API_KEY=
+# Firebase console > Project settings > Project ID.
+FIREBASE_PROJECT_ID=
+# Firebase public web config as one-line JSON (apiKey,authDomain,projectId,appId).
+FIREBASE_WEB_CONFIG=
+# Optional Google Cloud Safe Browsing API key.
+SAFE_BROWSING_API_KEY=
+# Base64-encoded 32-byte AES key. Generate locally; never commit real values.
+DATA_ENCRYPTION_KEY=
+# Current key version prefix; keep old versions available when rotating keys.
+DATA_ENCRYPTION_KEY_VERSION=v1
+# Random secret salt used to hash IP addresses (required for live mode).
+IP_HASH_SALT=
+# Random secret for /api/radar/generate via X-Admin-Secret.
+ADMIN_SECRET=
+# Exact browser origin. Change to the public app origin before deploying.
+ALLOWED_ORIGIN=http://localhost:5173
+# DATABASE_URL belongs in .env for scripts, not in the deployed Worker.
+# HYPERDRIVE is a Wrangler binding, not a string secret. Configure wrangler.jsonc.

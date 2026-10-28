@@ -1,0 +1,6 @@
+#!/bin/sh
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks git --pre-commit --staged --redact --no-banner
+else
+  echo "gitleaks is not installed. Install it before the release; CI also scans for secrets."
+fi
