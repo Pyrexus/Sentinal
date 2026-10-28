@@ -33,7 +33,7 @@ export default function LabPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [verdict, setVerdict] = useState<'safe' | 'scam' | null>(null);
   const client = useQueryClient();
-  const query = useQuery({ queryKey: ['lab', radarId], queryFn: () => api<LabScenario>('/lab/next' + (radarId ? '?radarId=' + encodeURIComponent(radarId) : '')), staleTime: 0 });
+  const query = useQuery({ queryKey: ['lab', radarId], queryFn: () => api<LabScenario>('/lab/next' + (radarId ? '?radarId=' + encodeURIComponent(radarId) : '')), staleTime: 60000, refetchOnWindowFocus: false, refetchOnReconnect: false });
   const submit = useMutation({ mutationFn: () => post<LabResult>('/lab/submit', { scenarioId: query.data!.id, verdict, selectedHotspots: selected }), onSuccess: () => { void client.invalidateQueries({ queryKey: ['dashboard'] }); } });
   function toggle(id: string) { setSelected(previous => previous.includes(id) ? previous.filter(value => value !== id) : [...previous, id]); }
   async function nextRound() {
