@@ -6,5 +6,6 @@ dist/
 .env.local
 coverage/
 *.log
-docs/screenshots/*.png
-!docs/screenshots/.gitkeep
+.tools/
+test-results/
+playwright-report/
