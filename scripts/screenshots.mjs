@@ -1,3 +1,4 @@
+/* global document, window, HTMLElement -- evaluated inside the browser by Playwright */
 import { chromium } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -20,6 +21,10 @@ async function open(path) {
 }
 async function capture(name) {
   const file = `${name}.png`;
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  });
   await page.screenshot({ path: fileURLToPath(new URL(file, directory)), fullPage: true, animations: 'disabled' });
   captures.push(file);
 }

@@ -2,6 +2,8 @@
 
 **[Open the live demo](https://sentinel-digital-safety.100coldice.workers.dev)** · [Two-minute demo guide](DEMO_SCRIPT.md) · [Architecture](docs/ARCHITECTURE.md) · [Security and limitations](docs/THREAT_MODEL.md)
 
+[![Verify Sentinel](https://github.com/Pyrexus/Sentinals-Tool-/actions/workflows/ci.yml/badge.svg)](https://github.com/Pyrexus/Sentinals-Tool-/actions/workflows/ci.yml)
+
 > The public site runs in **Demo Mode**: no sign-in or API keys are needed to explore it. Progress is temporary, analysis uses the labelled basic checker, and training examples are fictional. Credentialed Firebase, Railway and Google AI integrations are implemented but have not been verified with live project credentials.
 
 ![Sentinel security dashboard](docs/screenshots/01-dashboard-desktop.png)
@@ -99,7 +101,7 @@ Enable **Authentication → Sign-in method → Google** in Firebase, register th
 
 ## Production setup and deployment
 
-Live external-service behavior requires your account credentials. Local verification passed 40 tests, type checking, lint, build and smoke checks, with zero vulnerabilities in the production dependency audit. The Cloudflare CLI is authenticated and deployment dry-run validation passed; neither result verifies a public deployment or live Firebase, Railway/Hyperdrive or Gemini behavior.
+The public Demo Mode deployment is live on Cloudflare Workers, and its health, Radar and Analyzer endpoints pass smoke checks. Local verification passed 40 tests, typechecking, lint, production build and browser checks, with zero production dependency vulnerabilities. Persistent accounts and configured AI require the credentials below; live Firebase, Railway/Hyperdrive and Gemini behavior has not yet been verified with project credentials.
 
 Create `.env` from `.env.example` and put the Railway public PostgreSQL URL in its `DATABASE_URL` entry. Then use this consolidated PowerShell sequence. Secret commands prompt for their values; do not substitute secrets into tracked files.
 
