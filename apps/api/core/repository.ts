@@ -41,7 +41,7 @@ export class MemoryRepository implements Repository {
   private audits:{actor:string|null;action:string;ipHash:string;createdAt:string}[]=[];
   async ensureUser(user:UserIdentity){this.users.set(user.id,structuredClone(user));}
   async saveAnalysis(record:AnalysisRecord){this.analyses.push(structuredClone(record));if(this.analyses.length>1000)this.analyses.shift();}
-  async getCachedAnalysis(inputHash:string){const entry=[...this.analyses].reverse().find(record=>record.inputHash===inputHash&&Date.parse(record.createdAt)>Date.now()-86400000);return entry?structuredClone(entry.result):null;}
+  async getCachedAnalysis(inputHash:string){const cutoff=Date.now()-86400000;const entry=[...this.analyses].reverse().find(record=>record.inputHash===inputHash&&Date.parse(record.createdAt)>cutoff&&Date.parse(record.result.assessedAt||record.createdAt)>cutoff);return entry?structuredClone(entry.result):null;}
   async getRadar(date?:string){return [...this.radar.values()].filter(item=>!date||item.date===date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,50).map(item=>structuredClone(item));}
   async upsertRadar(items:RadarItem[]){for(const item of items)this.radar.set(item.id,structuredClone(item));if(this.radar.size>100){const keys=[...this.radar.keys()];for(const key of keys.slice(0,this.radar.size-100))this.radar.delete(key);}}
   async getState(userId:string){return structuredClone(this.states.get(userId)||{checklist:{},privacy:null});}
@@ -73,7 +73,7 @@ class PostgresRepository implements Repository {
   }
   async ensureUser(user:UserIdentity){await this.db.insert(schema.users).values({id:user.id,displayName:user.displayName}).onConflictDoUpdate({target:schema.users.id,set:{displayName:user.displayName}});}
   async saveAnalysis(record:AnalysisRecord){await this.db.insert(schema.analyses).values({id:record.id,userId:record.userId,inputHash:record.inputHash,category:record.result.category,riskScore:record.result.riskScore,resultJson:record.result,encryptedContent:record.encryptedContent,createdAt:record.createdAt});}
-  async getCachedAnalysis(inputHash:string){const [row]=await this.db.select({result:schema.analyses.resultJson}).from(schema.analyses).where(and(eq(schema.analyses.inputHash,inputHash),gte(schema.analyses.createdAt,new Date(Date.now()-86400000).toISOString()))).orderBy(desc(schema.analyses.createdAt)).limit(1);return row?.result||null;}
+  async getCachedAnalysis(inputHash:string){const cutoff=new Date(Date.now()-86400000).toISOString();const [row]=await this.db.select({result:schema.analyses.resultJson}).from(schema.analyses).where(and(eq(schema.analyses.inputHash,inputHash),gte(schema.analyses.createdAt,cutoff),sql`(${schema.analyses.resultJson}->>'assessedAt' IS NULL OR ${schema.analyses.resultJson}->>'assessedAt' >= ${cutoff})`)).orderBy(desc(schema.analyses.createdAt)).limit(1);return row?.result||null;}
   async getRadar(date?:string){const rows=await this.db.select({item:schema.radarItems.payloadJson}).from(schema.radarItems).where(date?eq(schema.radarItems.date,date):undefined).orderBy(desc(schema.radarItems.date)).limit(50);return rows.map(row=>row.item);}
   async upsertRadar(items:RadarItem[]){for(const item of items)await this.db.insert(schema.radarItems).values({id:item.id,date:item.date,title:item.title,type:item.type,severity:item.severity,source:item.source,payloadJson:item}).onConflictDoUpdate({target:schema.radarItems.id,set:{payloadJson:item,title:item.title,severity:item.severity,source:item.source}});}
   async getState(userId:string){

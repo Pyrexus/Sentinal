@@ -2,7 +2,7 @@ import type { AnalysisResult } from './schemas';
 
 type Rule = {pattern:RegExp;weight:number;category:string;reason:string;severity:'low'|'medium'|'high'};
 const rules:Rule[] = [
-  {pattern:/\b(?:urgent|immediately|within \d+ (?:minutes?|hours?)|last warning|final notice|act now)\b/i,weight:17,category:'Pressure tactics',reason:'A short deadline can pressure you to act before checking the sender.',severity:'medium'},
+  {pattern:/\b(?:urgent(?:ly)?|immediately|within \d+ (?:minutes?|hours?)|last warning|final notice|act now)\b/i,weight:17,category:'Pressure tactics',reason:'A short deadline can pressure you to act before checking the sender.',severity:'medium'},
   {pattern:/\b(?:share|send|tell|provide|confirm|enter)\b.{0,35}\b(?:otp|pin|cvv|password|verification code)\b/i,weight:45,category:'Credential theft',reason:'Requests for secret codes or payment PINs are a serious warning sign. Do not share them.',severity:'high'},
   {pattern:/\b(?:kyc|account)\b.{0,55}\b(?:blocked|suspend(?:ed)?|deactivat(?:e|ed)|expired|update)\b/i,weight:25,category:'Account impersonation',reason:'Scammers use account or KYC warnings to move you to an unofficial channel.',severity:'high'},
   {pattern:/\b(?:won|winner|lottery|prize|reward|free gift|guaranteed returns?)\b/i,weight:22,category:'Reward bait',reason:'Unexpected rewards can be bait for a fee, login, or payment request.',severity:'medium'},

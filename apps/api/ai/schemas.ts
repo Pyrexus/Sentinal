@@ -33,6 +33,8 @@ export const safeBrowsingSchema = z.object({
 export const analysisSchema = analysisModelSchema.extend({
   source: z.enum(['gemini', 'heuristic']),
   safeBrowsing: safeBrowsingSchema,
+  cached: z.boolean().optional(),
+  assessedAt: z.string().datetime().optional(),
 });
 export type AnalysisResult = z.infer<typeof analysisSchema>;
 export type AnalysisInput = z.infer<typeof analysisInputSchema>;
@@ -62,6 +64,7 @@ export const radarResponseSchema = {
 
 /** All rendered strings are text; removing tags also keeps exported model text inert. */
 export function stripHtml<T>(value: T): T {
+  // eslint-disable-next-line no-control-regex -- Remove nonprinting control characters from model strings before rendering.
   if (typeof value === 'string') return value.replace(/<[^>]*>/g, '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '') as T;
   if (Array.isArray(value)) return value.map(stripHtml) as T;
   if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, stripHtml(item)])) as T;

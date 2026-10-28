@@ -5,7 +5,7 @@ import {generateJson,readBoundedJson} from './gemini';
 import {safeBrowsingSignal} from './safe-browsing';
 import {ExpiringCache} from './cache';
 import {analysisPrompt} from './prompts';
-import {isFictionalRadarSample} from './service';
+import {analyzeContent,isFictionalRadarSample} from './service';
 
 describe('input and output validation',()=>{
   it('rejects unknown fields, overlong content, and unsafe URL schemes',()=>{
@@ -40,11 +40,21 @@ describe('deterministic fallback and injection handling',()=>{
   it('rejects live domains and phone numbers in generated fictional content',()=>{
     expect(isFictionalRadarSample('Megh Parcel (fictional): see https://megh-parcel.example/help')).toBe(true);
     expect(isFictionalRadarSample('Megh Parcel (fictional): see https://example.com/help')).toBe(false);
+    expect(isFictionalRadarSample('Megh Parcel (fictional): see attacker.xyz')).toBe(false);
+    expect(isFictionalRadarSample('Megh Parcel (fictional): see ftp://parcel.example/file')).toBe(false);
+    expect(isFictionalRadarSample('Megh Parcel (fictional): pay parcel@upi')).toBe(false);
     expect(isFictionalRadarSample('Megh Parcel (fictional): call +91 98765 43210')).toBe(false);
   });
 });
 
 describe('provider boundaries',()=>{
+  it('falls back when a schema-valid model response gives unsafe advice',async()=>{
+    const {source:_source,safeBrowsing:_signal,...assessment}=heuristicAnalyze('Urgent: share your OTP immediately.');
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>new Response(JSON.stringify({candidates:[{content:{parts:[{text:JSON.stringify({...assessment,riskScore:0,verdict:'Low',nextSteps:['Share your OTP with the caller.']})}]},finishReason:'STOP'}]}),{status:200}));
+    vi.stubGlobal('fetch',fetcher);
+    try{const result=await analyzeContent({GEMINI_API_KEY:'test-key'},{type:'text',content:'Urgent: share your OTP immediately.'});expect(result.source).toBe('heuristic');expect(result.verdict).toBe('High');}
+    finally{vi.unstubAllGlobals();}
+  });
   it('retries malformed output once, then rejects',async()=>{
     const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>new Response(JSON.stringify({candidates:[{content:{parts:[{text:'{"wrong":true}'}]},finishReason:'STOP'}]}),{status:200}));
     await expect(generateJson('test-key','system','data',{},radarBatchSchema,fetcher)).rejects.toThrow();expect(fetcher).toHaveBeenCalledTimes(2);
