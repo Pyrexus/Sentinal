@@ -1,16 +1,16 @@
 # Sentinel — Your Digital Safety Copilot
 
-**[Open the live demo](https://sentinel-digital-safety.100coldice.workers.dev)** · [Two-minute demo guide](DEMO_SCRIPT.md) · [Architecture](docs/ARCHITECTURE.md) · [Security and limitations](docs/THREAT_MODEL.md)
+**[Open Sentinel](https://sentinel-digital-safety.100coldice.workers.dev)** · [Two-minute demo guide](DEMO_SCRIPT.md) · [Architecture](docs/ARCHITECTURE.md) · [Security and limitations](docs/THREAT_MODEL.md)
 
 [![Verify Sentinel](https://github.com/Pyrexus/Sentinals-Tool-/actions/workflows/ci.yml/badge.svg)](https://github.com/Pyrexus/Sentinals-Tool-/actions/workflows/ci.yml)
 
-> The public site runs in **Demo Mode**: no sign-in or API keys are needed to explore it. Progress is temporary, analysis uses the labelled basic checker, and training examples are fictional. Credentialed Firebase, Railway and Google AI integrations are implemented but have not been verified with live project credentials.
+> Sentinel is configured for **live mode** with Firebase Google sign-in, Railway PostgreSQL through Cloudflare Hyperdrive, and Gemini Flash Lite. Explicitly saved messages use encrypted storage. Training examples remain fictional, and unavailable or invalid AI results use labelled fallbacks. Google Safe Browsing is optional and is not configured on this deployment.
 
 ![Sentinel security dashboard](docs/screenshots/01-dashboard-desktop.png)
 
 ## For judges: try this first
 
-1. Open **Threat Analyzer**, choose **Urgent KYC request**, and select **Analyze message**. Read the highlighted evidence and safe next steps.
+1. Open **Threat Analyzer**, choose **Urgent KYC request**, and select **Analyze message**. Read the highlighted evidence and safe next steps. Sign in with Google to save progress.
 2. Open **Scam Radar**, expand a fictional pattern, and launch **Test yourself**.
 3. In **Phishing Lab**, tap the suspicious phrases, choose a verdict, and view the feedback and earned XP.
 4. Try **Privacy Check**, **Account Security**, or one of the twelve **Learn Hub** lessons, then return to your dashboard.
@@ -23,10 +23,10 @@
 | Navigation and data UI | React Router, TanStack Query, Recharts, Plus Jakarta Sans and IBM Plex Mono |
 | Live authentication | Firebase Google sign-in; server verification with jose |
 | Live storage | Railway PostgreSQL, Cloudflare Hyperdrive, Drizzle |
-| AI and URL signals | Gemini 2.5 Flash, deterministic fallback, optional Google Safe Browsing |
+| AI and URL signals | Gemini Flash Lite (`gemini-flash-lite-latest`), deterministic fallback, optional Google Safe Browsing |
 | Verification | Vitest, Playwright, ESLint, TypeScript, gitleaks, GitHub Actions |
 
-**Verified locally:** 40 passing tests, typecheck, lint, production build, API smoke checks, browser interactions at desktop/mobile sizes, ten screenshots, zero production dependency vulnerabilities, and a clean project/history secret scan.
+**Verification:** 42 passing tests, typecheck, lint, production build, live health/Radar/Analyzer smoke checks, browser checks at desktop/mobile sizes, and ten screenshots. Live provider checks produced validated Gemini results for analysis, privacy summaries, Lab scenarios, and Radar generation. The deployed browser loads Google sign-in without fatal errors. A complete Google sign-in and saved-data browser journey remains a manual release check.
 
 A digital-safety learning app for students and first-time internet users in India. Check a suspicious message, practise on fictional examples, and build better account and privacy habits.
 
@@ -62,7 +62,7 @@ Open `http://localhost:5173`. Leave credentials blank for Demo Mode. The API run
 
 ## Stack and layout
 
-One Cloudflare Worker serves Hono API routes and the Vite React build through Workers Static Assets. The frontend uses TypeScript, Tailwind, Radix, Framer Motion, Recharts, Lucide, TanStack Query and React Router. Production storage uses Drizzle/PostgreSQL through Hyperdrive; authentication uses Firebase Google sign-in and `jose` verification. Runtime AI uses Gemini 2.5 Flash with strict JSON validation.
+One Cloudflare Worker serves Hono API routes and the Vite React build through Workers Static Assets. The frontend uses TypeScript, Tailwind, Radix, Framer Motion, Recharts, Lucide, TanStack Query and React Router. Production storage uses Drizzle/PostgreSQL through Hyperdrive; authentication uses Firebase Google sign-in and `jose` verification. Runtime AI uses the configured Gemini model with strict JSON validation. This deployment selects Flash Lite after the Flash endpoint returned high-demand errors; model selection is controlled by `GEMINI_MODEL`.
 
 ```text
 apps/web/          React app
@@ -80,6 +80,7 @@ Never put a private credential in a `VITE_*` variable or commit `.env` / `.dev.v
 | Variable / binding | Where it comes from | Purpose |
 | --- | --- | --- |
 | `GEMINI_API_KEY` | Google AI Studio | Server-side model requests; optional for fallback demo |
+| `GEMINI_MODEL` | A supported Gemini model ID | Non-secret model setting; this deployment uses `gemini-flash-lite-latest` |
 | `DATABASE_URL` | Railway PostgreSQL public TCP connection URL | Local migration/seed scripts and Hyperdrive origin; not a deployed Worker secret |
 | `HYPERDRIVE` | Cloudflare Hyperdrive configuration ID | Wrangler binding that supplies runtime database connectivity |
 | `FIREBASE_PROJECT_ID` | Firebase project settings | Verified ID-token audience and issuer |
@@ -101,9 +102,9 @@ Enable **Authentication → Sign-in method → Google** in Firebase, register th
 
 ## Production setup and deployment
 
-The public Demo Mode deployment is live on Cloudflare Workers, and its health, Radar and Analyzer endpoints pass smoke checks. Local verification passed 40 tests, typechecking, lint, production build and browser checks, with zero production dependency vulnerabilities. Persistent accounts and configured AI require the credentials below; live Firebase, Railway/Hyperdrive and Gemini behavior has not yet been verified with project credentials.
+The Cloudflare deployment has Firebase Google sign-in and its authorised production domain configured, a Railway PostgreSQL database connected through Hyperdrive, and a working Gemini Flash Lite configuration. Encryption keys and the IP-hashing salt are configured as server-side secrets. Safe Browsing remains unavailable until its optional API key is supplied. Configuration and provider checks do not replace a complete authenticated browser check of sign-in, persistence, export, and deletion.
 
-Create `.env` from `.env.example` and put the Railway public PostgreSQL URL in its `DATABASE_URL` entry. Then use this consolidated PowerShell sequence. Secret commands prompt for their values; do not substitute secrets into tracked files.
+For your own deployment, create `.env` from `.env.example` and put the Railway public PostgreSQL URL in its `DATABASE_URL` entry. Create a Hyperdrive configuration in the Cloudflare dashboard using the database origin credentials, then add its returned ID to `wrangler.jsonc`. Secret commands below prompt for their values; do not substitute private credentials into tracked files or command arguments.
 
 ```powershell
 npm ci
@@ -112,10 +113,10 @@ npx wrangler login
 $databaseEntry = Get-Content .env | Where-Object { $_ -match '^DATABASE_URL=' } | Select-Object -First 1
 if (!$databaseEntry) { throw 'Set DATABASE_URL in .env first.' }
 $env:DATABASE_URL = $databaseEntry.Substring('DATABASE_URL='.Length).Trim().Trim('"').Trim("'")
-npx wrangler hyperdrive create sentinel-db --connection-string "$env:DATABASE_URL"
-# Add the returned ID to wrangler.jsonc:
+# Add the Hyperdrive ID from the dashboard to wrangler.jsonc:
 # "hyperdrive": [{ "binding": "HYPERDRIVE", "id": "RETURNED_ID" }]
 # Set vars.ALLOWED_ORIGIN there to your exact deployed HTTPS origin.
+# Set vars.GEMINI_MODEL to a supported model, e.g. "gemini-flash-lite-latest".
 
 npx wrangler secret put FIREBASE_PROJECT_ID
 npx wrangler secret put FIREBASE_WEB_CONFIG
@@ -139,6 +140,8 @@ npm run deploy
 $env:SMOKE_URL = 'https://YOUR_WORKER.YOUR_SUBDOMAIN.workers.dev'
 npm run smoke
 ```
+
+The smoke check covers public health, Radar, and unsaved analysis in both demo and live mode. Saving messages and managing personal progress require a valid Firebase ID token; verify those flows through the signed-in app. An unauthenticated `401` from a protected route is expected.
 
 The daily Cron Trigger is `30 0 * * *`: 00:30 UTC, or 06:00 India time. Manual generation uses `POST /api/radar/generate` with `Content-Type: application/json`, an empty JSON object, and `X-Admin-Secret`. Keep the admin secret out of browser bundles and screenshots. Generated examples are fictional, validated and source-labelled.
 
@@ -170,7 +173,7 @@ The repository provides a gitleaks pre-commit hook. Enable it with `git config c
 - Scores measure practice and self-reported habits. They are not scan results, certifications, guarantees, or evidence of real account settings.
 - Models and heuristics can miss scams or flag benign content. Confidence is not calibrated detection accuracy. Verify through official apps, known bookmarks, or the number on your bank card. Never share OTP, PIN or CVV.
 - The Radar bank and lab scenarios are fictional samples. Generation is not a report of newly observed incidents. Safe Browsing may be unavailable or incomplete; a clean lookup does not establish safety.
-- Free-tier quotas and provider downtime affect availability. Production generation uses an atomic 30-second database lease to deduplicate work across instances; demo coordination and storage remain temporary and per-isolate. Real Firebase, Railway/Hyperdrive and Google API operation must be tested with your configuration.
+- Free-tier quotas and provider downtime affect availability. Production generation uses an atomic 30-second database lease to deduplicate work across instances; demo coordination and storage remain temporary and per-isolate. Recheck your configured providers and authenticated flows after changing deployments or credentials.
 - Screenshot/QR-image analysis, Hindi localisation, push notifications, certificates and a leaderboard are not part of this build.
 
 Read [SPEC](docs/SPEC.md), [ARCHITECTURE](docs/ARCHITECTURE.md), [THREAT_MODEL](docs/THREAT_MODEL.md), [SECURITY](SECURITY.md), and [AI_USAGE](AI_USAGE.md). Original repository code is licensed under [MIT](LICENSE); dependencies retain their own licenses.

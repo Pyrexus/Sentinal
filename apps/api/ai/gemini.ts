@@ -11,15 +11,17 @@ export async function readBoundedJson(response:Response,maxBytes=100_000):Promis
   return JSON.parse(new TextDecoder().decode(result));
 }
 
-export async function generateJson<T>(apiKey:string,system:string,prompt:string,responseSchema:object,validator:z.ZodType<T>,fetcher:typeof fetch=fetch):Promise<T> {
+export async function generateJson<T>(apiKey:string,system:string,prompt:string,responseSchema:object,validator:z.ZodType<T>,fetcher:typeof fetch=fetch,model='gemini-2.5-flash'):Promise<T> {
+  if(!/^gemini-[a-z0-9.-]{1,100}$/i.test(model))throw new Error('Invalid Gemini model');
+  const thinkingConfig=/^gemini-2\.5-flash(?:-lite)?(?:-\d{3})?$/.test(model)?{thinkingConfig:{thinkingBudget:0}}:{};
   let lastError:unknown;
   for(let attempt=0;attempt<2;attempt++) {
     const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),12000);
     try {
-      // Calls Gemini 2.5 Flash with a constrained JSON response schema.
-      const response=await fetcher('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',{
+      // The configurable model stays on the fixed Gemini API origin.
+      const response=await fetcher(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{
         method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':apiKey},signal:controller.signal,
-        body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',responseSchema,temperature:0.2,maxOutputTokens:5000,thinkingConfig:{thinkingBudget:0}}}),
+        body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',responseSchema,temperature:0.2,maxOutputTokens:5000,...thinkingConfig}}),
       });
       if(!response.ok) throw new Error(`AI response status ${response.status}`);
       const envelope=await readBoundedJson(response);

@@ -3,7 +3,7 @@
 ## Tools and roles
 
 - Codex coding agents assisted with implementation, fictional training content, documentation, tests, and review. Work was split across application integration, backend security/storage, the React interface, and content/documentation.
-- The product integrates Gemini 2.5 Flash for risk explanations and fictional awareness/training content when `GEMINI_API_KEY` is configured. The code validates its responses before use.
+- The product integrates Gemini for risk explanations, privacy summaries, and fictional awareness/training content when `GEMINI_API_KEY` is configured. The live configuration selects `gemini-flash-lite-latest` after the Flash endpoint returned high-demand errors. The code validates model responses before use.
 - Without a working provider, the analyzer uses a deterministic rules engine and training uses bundled seed content. The UI labels the source; a fallback is not presented as model output.
 - No use of Gemini in Antigravity or another deployment assistant is claimed. Owner: add such use here only if it actually occurred.
 
@@ -15,9 +15,11 @@ Implementation was then divided into modules with shared interfaces. Agents crea
 
 ## What was verified
 
-Local verification on 2026-10-28 passed 40 tests, type checking, lint, the production build and smoke checks. The production dependency audit reported zero vulnerabilities and Git history passed secret scanning. Ten screenshots were captured with Microsoft Edge and used for visual review. Cloudflare CLI authentication and a deployment dry run were checked; live Firebase, Railway/Hyperdrive and Gemini behavior has not been verified with real credentials. A passing local test is evidence for the cases it exercises, not proof of security or model accuracy.
+Local verification on 2026-10-28 included passing automated tests, type checking, lint, the production build and local smoke checks. The production dependency audit reported zero vulnerabilities and Git history passed secret scanning. Ten screenshots were captured with Microsoft Edge and used for visual review.
 
-No owner review, production deployment, accuracy benchmark, user study, or expert endorsement is invented here.
+The application has been deployed on Cloudflare Workers with real Railway PostgreSQL/Hyperdrive and Firebase configuration. Firebase Google sign-in and the deployed authorised domain are configured. Live provider checks returned validated Gemini Flash Lite output for analysis, privacy summaries, Lab scenarios, and Radar generation. Deployed health, Radar, and Analyzer smoke checks passed in live mode. The deployed browser loaded without fatal errors and showed an enabled Google sign-in button; a complete authenticated user browser journey has not yet been verified.
+
+A passing check is evidence for the cases it exercises, not proof of security or model accuracy. No owner review, accuracy benchmark, user study, or expert endorsement is invented here.
 
 ## Corrections and limitations
 

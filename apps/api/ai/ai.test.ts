@@ -52,12 +52,24 @@ describe('provider boundaries',()=>{
     const {source:_source,safeBrowsing:_signal,...assessment}=heuristicAnalyze('Urgent: share your OTP immediately.');
     const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>new Response(JSON.stringify({candidates:[{content:{parts:[{text:JSON.stringify({...assessment,riskScore:0,verdict:'Low',nextSteps:['Share your OTP with the caller.']})}]},finishReason:'STOP'}]}),{status:200}));
     vi.stubGlobal('fetch',fetcher);
-    try{const result=await analyzeContent({GEMINI_API_KEY:'test-key'},{type:'text',content:'Urgent: share your OTP immediately.'});expect(result.source).toBe('heuristic');expect(result.verdict).toBe('High');}
+    try{
+      const result=await analyzeContent({GEMINI_API_KEY:'test-key',GEMINI_MODEL:'gemini-flash-latest'},{type:'text',content:'Urgent: share your OTP immediately.'});
+      expect(result.source).toBe('heuristic');expect(result.verdict).toBe('High');
+      expect(fetcher.mock.calls[0][0]).toBe('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent');
+      expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body)).generationConfig).not.toHaveProperty('thinkingConfig');
+    }
     finally{vi.unstubAllGlobals();}
   });
   it('retries malformed output once, then rejects',async()=>{
     const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>new Response(JSON.stringify({candidates:[{content:{parts:[{text:'{"wrong":true}'}]},finishReason:'STOP'}]}),{status:200}));
     await expect(generateJson('test-key','system','data',{},radarBatchSchema,fetcher)).rejects.toThrow();expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher.mock.calls[0][0]).toBe('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent');
+    expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body)).generationConfig.thinkingConfig).toEqual({thinkingBudget:0});
+  });
+  it('rejects model values that could alter the provider URL before sending credentials',async()=>{
+    const fetcher=vi.fn<typeof fetch>();
+    await expect(generateJson('test-key','system','data',{},radarBatchSchema,fetcher,'gemini-flash-latest?key=other')).rejects.toThrow('Invalid Gemini model');
+    expect(fetcher).not.toHaveBeenCalled();
   });
   it('never requests the supplied target URL',async()=>{
     const fetcher=vi.fn<typeof fetch>().mockResolvedValue(new Response('{}',{status:200}));

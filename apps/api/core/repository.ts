@@ -100,8 +100,9 @@ class PostgresRepository implements Repository {
   }
   async deleteUser(userId:string){await this.db.delete(schema.users).where(eq(schema.users.id,userId));}
   async consumeRateLimit(key:string,limit:number,windowMs:number,now=Date.now()){
-    const timestamp=new Date(now),expiresAt=new Date(now+windowMs);
-    const [row]=await this.db.insert(schema.rateLimits).values({key,count:1,expiresAt}).onConflictDoUpdate({target:schema.rateLimits.key,set:{count:sql`CASE WHEN ${schema.rateLimits.expiresAt} <= ${timestamp} THEN 1 ELSE ${schema.rateLimits.count} + 1 END`,expiresAt:sql`CASE WHEN ${schema.rateLimits.expiresAt} <= ${timestamp} THEN ${expiresAt} ELSE ${schema.rateLimits.expiresAt} END`}}).returning();
+    const timestamp=new Date(now).toISOString(),expiresAt=new Date(now+windowMs);
+    // Raw SQL parameters do not use the timestamp column's Date encoder.
+    const [row]=await this.db.insert(schema.rateLimits).values({key,count:1,expiresAt}).onConflictDoUpdate({target:schema.rateLimits.key,set:{count:sql`CASE WHEN ${schema.rateLimits.expiresAt} <= ${timestamp} THEN 1 ELSE ${schema.rateLimits.count} + 1 END`,expiresAt:sql`CASE WHEN ${schema.rateLimits.expiresAt} <= ${timestamp} THEN ${expiresAt.toISOString()} ELSE ${schema.rateLimits.expiresAt} END`}}).returning();
     return {allowed:row.count<=limit,remaining:Math.max(0,limit-row.count),retryAfter:Math.max(1,Math.ceil((row.expiresAt.getTime()-now)/1000))};
   }
   async audit(actor:string|null,action:string,ipHash:string){await this.db.insert(schema.auditLog).values({id:crypto.randomUUID(),actor,action,ipHash});}
