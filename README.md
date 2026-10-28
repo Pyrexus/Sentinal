@@ -20,7 +20,7 @@
 | Runtime and hosting | Cloudflare Workers, Static Assets and daily Cron Trigger |
 | API and validation | Hono, TypeScript, Zod |
 | Interface | React 18, Vite, Tailwind, Radix, Framer Motion, Lucide |
-| Navigation and data UI | React Router, TanStack Query, Recharts, Geist fonts |
+| Navigation and data UI | React Router, TanStack Query, Recharts, Plus Jakarta Sans and IBM Plex Mono |
 | Live authentication | Firebase Google sign-in; server verification with jose |
 | Live storage | Railway PostgreSQL, Cloudflare Hyperdrive, Drizzle |
 | AI and URL signals | Gemini 2.5 Flash, deterministic fallback, optional Google Safe Browsing |
